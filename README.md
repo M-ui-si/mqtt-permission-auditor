@@ -4,6 +4,14 @@
 
 项目提供三种使用方式：Node.js 核心/命令行、Docker 本地 Broker 复现环境，以及供 Agnes Harness（AGH）调用的插件和只读结果面板。根目录的 `MQTT权限迁移审计器.exe` 是 AGH 网页界面的本地启动器；它不包含 Broker、AGH 上游程序或模型。
 
+## 操作演示
+
+以下为产品操作演示视频，可直接在仓库中查看：
+
+[操作演示视频](docs/操作演示视频.mp4)
+
+<video src="docs/操作演示视频.mp4" controls width="720"></video>
+
 ## 环境要求
 
 | 用途 | 需要的环境 | 不需要的内容 |
