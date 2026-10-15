@@ -1,0 +1,19 @@
+{
+  "name": "mqtt-permission-auditor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mosquitto → EMQX 文件 ACL 迁移验收：以实际送达为证据的三态权限审计（核心验证器 + CLI）",
+  "engines": {
+    "node": ">=24.10"
+  },
+  "scripts": {
+    "test": "node --test tests/core/mqtt-codec.test.mjs tests/core/aggregation.test.mjs tests/core/runner.test.mjs tests/core/broker-guard.test.mjs tests/core/verdicts.test.mjs tests/cli/parse-endpoint.test.mjs tests/cli/environment.test.mjs tests/plugin/tools.test.mjs tests/plugin/sync.test.mjs tests/plugin/dashboard.test.mjs tests/plugin/skill.test.mjs tests/plugin/process.test.mjs",
+    "audit": "node cli/run-audit.mjs",
+    "env:init": "node cli/environment.mjs init",
+    "env:up": "node cli/environment.mjs up",
+    "env:check": "node cli/environment.mjs check",
+    "env:audit": "node cli/environment.mjs audit",
+    "env:down": "node cli/environment.mjs down"
+  }
+}

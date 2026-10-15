@@ -1,0 +1,8 @@
+%% Intentionally unsafe ordering: c3 target delivery violates the business requirement.
+{allow, {username, "auditor"}, subscribe, ["#"]}.
+{allow, {username, "device-sensor"}, publish, ["telemetry/#", "factory/#"]}.
+{allow, {username, "ops-admin"}, all, ["factory/#"]}.
+{allow, {username, "guest-ro"}, subscribe, ["telemetry/#"]}.
+{deny, all, subscribe, ["$SYS/#", {eq, "#"}, {eq, "+/#"}]}.
+{deny, {username, "device-sensor"}, publish, ["factory/admin/#"]}.
+{deny, all}.

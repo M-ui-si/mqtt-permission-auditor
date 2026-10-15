@@ -1,0 +1,57 @@
+# Credentials and private configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+*.secret
+credentials.json
+secrets.json
+
+# Preserved local runtime, tools and caches
+/vendor/agnes-harness/
+/.tools/
+/.pnpm-store/
+/AppData/
+**/.mimosa/
+.agh/
+.agnes/
+agh-data/
+.local/
+
+# Raw sessions, traffic and generated reports
+**/session*.json
+**/session*.jsonl
+**/evidence/raw/
+/artifacts/
+/reports/
+*.log
+*.jsonl
+*.pcap
+*.pcapng
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.turbo/
+.cache/
+coverage/
+playwright-report/
+test-results/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Editor and OS files
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini

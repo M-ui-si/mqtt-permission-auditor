@@ -1,0 +1,14 @@
+# Synthetic identities and topics only.
+user auditor
+topic read #
+
+user device-sensor
+topic deny factory/admin/#
+topic write telemetry/#
+topic write factory/#
+
+user ops-admin
+topic readwrite factory/#
+
+user guest-ro
+topic read telemetry/#

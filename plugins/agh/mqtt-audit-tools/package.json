@@ -1,0 +1,43 @@
+{
+  "name": "mqtt-audit-tools",
+  "version": "0.3.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "MQTT Permission Auditor 受控工具与只读 AGH 审计结果面板（仅固定本地实例，返回结构化 JSON）",
+  "exports": "./index.mjs",
+  "agnes": {
+    "plugins": [
+      {
+        "export": "auditTools",
+        "id": "ext:mqtt-audit-tools",
+        "inject": [
+          "extension"
+        ]
+      },
+      {
+        "export": "auditDashboardRuntime",
+        "id": "ext:mqtt-audit-tools/dashboard-service",
+        "runtime": "in-process",
+        "services": [
+          "mqtt.audit.latestresult",
+          "mqtt.audit.runstatus",
+          "mqtt.audit.events",
+          "mqtt.audit.health"
+        ]
+      }
+    ],
+    "contributions": [
+      {
+        "kind": "skill",
+        "id": "mqtt-audit-tools/mqtt-migration-audit",
+        "path": "./skills/mqtt-migration-audit.md"
+      }
+    ],
+    "clientDescriptors": [
+      {
+        "rowId": "ext:mqtt-audit-tools/dashboard-service",
+        "path": "./extensions/dashboard/agnes.client.json"
+      }
+    ]
+  }
+}

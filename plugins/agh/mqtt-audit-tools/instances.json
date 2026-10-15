@@ -1,0 +1,8 @@
+{
+  "local-isolated": {
+    "description": "本机隔离 Compose 环境（mqttaudit 项目：源 Mosquitto 11883 / 目标 EMQX 2883，仅回环端口，合成数据）",
+    "source": { "host": "127.0.0.1", "port": 11883, "label": "source-mosquitto" },
+    "target": { "host": "127.0.0.1", "port": 2883, "label": "target-emqx" },
+    "witness": "auditor"
+  }
+}

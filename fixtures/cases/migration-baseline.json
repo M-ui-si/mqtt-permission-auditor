@@ -1,0 +1,52 @@
+{
+  "id": "migration-baseline",
+  "description": "Mosquitto → EMQX 文件 ACL 迁移基线案例集（合成身份与主题；期望值来自独立业务要求，不来自任一端配置）",
+  "requirements": [
+    "telemetry/# 可由 device-sensor 发布（业务必需）",
+    "factory/x 禁止 guest-ro 发布",
+    "factory/admin/# 仅 ops-admin 可发布，device-sensor 必须被拒绝",
+    "factory/cmd/# 可由 ops-admin 发布并订阅（业务必需）",
+    "telemetry/up 可由 guest-ro 订阅（业务必需）",
+    "factory/# 禁止 guest-ro 订阅",
+    "无授权身份 no-rules-user 不得发布 telemetry/up"
+  ],
+  "checks": [
+    { "id": "c1", "identity": "device-sensor", "action": "publish", "topic": "telemetry/up", "expect": "allow" },
+    { "id": "c2", "identity": "guest-ro", "action": "publish", "topic": "factory/x", "expect": "deny" },
+    { "id": "c3", "identity": "device-sensor", "action": "publish", "topic": "factory/admin/secret", "expect": "deny" },
+    { "id": "c4", "identity": "ops-admin", "action": "publish", "topic": "factory/cmd/run", "expect": "allow" },
+    {
+      "id": "c5",
+      "identity": "ops-admin",
+      "action": "subscribe",
+      "filter": "factory/#",
+      "publisher": "device-sensor",
+      "publishTopic": "factory/cmd/up",
+      "expect": "allow"
+    },
+    {
+      "id": "c6",
+      "identity": "guest-ro",
+      "action": "subscribe",
+      "filter": "telemetry/up",
+      "publisher": "device-sensor",
+      "publishTopic": "telemetry/up",
+      "expect": "allow"
+    },
+    {
+      "id": "c7",
+      "identity": "guest-ro",
+      "action": "subscribe",
+      "filter": "factory/#",
+      "publisher": "device-sensor",
+      "publishTopic": "factory/x",
+      "expect": "deny"
+    },
+    { "id": "c8", "identity": "no-rules-user", "action": "publish", "topic": "telemetry/up", "expect": "deny" }
+  ],
+  "scope": [
+    "身份矩阵固定为 device-sensor / ops-admin / guest-ro / no-rules-user 与见证账号 auditor",
+    "主题空间固定为 telemetry/#、factory/#、factory/admin/#、factory/cmd/# 前缀（全部合成）",
+    "源端配置见 .local/env/mosquitto/config/acl，目标端为部署时所选 ACL 档案（naive / omission）"
+  ]
+}

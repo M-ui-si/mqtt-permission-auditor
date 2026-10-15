@@ -1,0 +1,14 @@
+{
+  "client": {
+    "entry": "./client/index.js",
+    "styles": ["./client/index.css", "./client/official-shell.css", "./client/process.css"],
+    "slotCatalogVersion": "dsh-client-slots/v1",
+    "slots": ["rightbar", "sidebar.panellist", "shell.overlay"],
+    "publicConfig": {
+      "title": "MQTT 权限迁移验收",
+      "refreshIntervalMs": 15000
+    },
+    "services": ["mqtt.audit.latestresult", "mqtt.audit.runstatus", "mqtt.audit.events", "mqtt.audit.health"],
+    "projections": []
+  }
+}
