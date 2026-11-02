@@ -1,58 +1,196 @@
-# MQTT 权限迁移审计器
+# MQTT Permission Auditor
 
-本项目用于验收 MQTT 平台迁移后的 ACL 权限。当前固定场景是 **Mosquitto → EMQX 文件 ACL 迁移**：分别在源端和目标端执行合成客户端操作，以消息是否被见证订阅者实际收到等协议证据，判断权限是否扩大、原有业务是否受损，以及权限是否符合独立定义的业务要求。
+English | [简体中文](README.zh-CN.md)
 
-项目提供三种使用方式：Node.js 核心/命令行、Docker 本地 Broker 复现环境，以及供 Agnes Harness（AGH）调用的插件和只读结果面板。根目录的 `MQTT权限迁移审计器.exe` 是 AGH 网页界面的本地启动器；它不包含 Broker、AGH 上游程序或模型。
+<div align="center">
 
-## 操作演示
+### Verify MQTT permissions with observable evidence.
 
-以下为产品操作演示视频，可直接在仓库中查看：
+**Acceptance testing for Mosquitto → EMQX file ACL migrations, with a standalone verifier and an Agnes Harness workflow.**
 
-[操作演示视频](docs/操作演示视频.mp4)
+![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A524.10-339933)
+![MQTT](https://img.shields.io/badge/protocol-MQTT%203.1.1-660066)
+![AGH plugin](https://img.shields.io/badge/AGH%20plugin-0.3.0-2563eb)
 
-<video src="docs/操作演示视频.mp4" controls width="720"></video>
+[Project Overview](#project-overview) · [Demo Video](#demo-video) · [Architecture](#architecture) · [Integration Standards](#integration-standards) · [Quickstart](#quickstart)
 
-## 环境要求
+</div>
 
-| 用途 | 需要的环境 | 不需要的内容 |
+## Project Overview
+
+### Background
+
+Moving an MQTT workload between platforms can change how ACL wildcards, rule order and default decisions behave. A configuration that looks equivalent may allow a forbidden operation or interrupt a required workflow. Comparing the old and new configurations alone also misses mistakes that already existed on both sides.
+
+MQTT Permission Auditor checks a fixed **Mosquitto → EMQX file ACL migration** against independently defined business requirements. It performs synthetic publish/subscribe operations on both local Brokers and turns protocol observations into reviewable results.
+
+### Core capabilities
+
+- **Three separate acceptance dimensions:** permission expansion, business damage and business-requirement compliance. The old configuration is not assumed to be a correct security baseline.
+- **Evidence-based verdicts:** message delivery establishes an allowed operation; an explicit topic-level subscription rejection establishes a denial. Missing evidence remains `unknown`.
+- **Two execution paths:** use the zero-dependency Node.js core/CLI directly, or let Agnes plan, invoke tools and review feedback through Agnes Harness (AGH).
+- **Traceable runs and retests:** correlate reports and observed events by `runId`, link retests to their parent, and label partial coverage explicitly.
+- **A session-linked panel:** inspect process events, Broker health, evidence and retest comparisons in the AGH workbench.
+- **Reproducible local fixtures:** eight synthetic checks (c1–c8), fixed Broker image digests, and `naive`, `corrected` and `omission` ACL variants.
+
+### Design highlights
+
+The project combines a deterministic verifier with an agent-guided acceptance workflow. Agnes chooses and explains actions; code and actual observations decide permissions. The panel displays those results rather than calculating a second verdict.
+
+A key distinction is **permission observations versus requirement results**: an observed `allow` can produce a business `fail` when that operation should be forbidden. Conversely, a missing delivery does not prove a denial. This keeps uncertainty visible and prevents a migration from passing merely because both configurations make the same mistake.
+
+The archived evidence records local Broker checks, real Agnes tool calls and panel verification separately. See the [evidence index](docs/evidence/README.md) and [progress log](docs/progress.md) for dates and limits; those records are not a fresh test of the current runtime.
+
+## Demo Video
+
+**[Watch or download the project demo →](docs/操作演示视频.mp4)**
+
+The walkthrough shows the acceptance goal, actual tool execution and observable results in three situations:
+
+| Scenario | What to look for |
+| --- | --- |
+| Business failure | A forbidden target-side delivery establishes a requirement failure; expansion requires separate source-side denial evidence. |
+| Broker unavailable | Missing observations produce `unknown`, rather than a denial or a passing audit. |
+| Successful scoped check | A delivery check passes after recovery, with its limited coverage stated explicitly. |
+
+The demonstration uses isolated local Brokers and synthetic data. A successful c1 check does not mean the full migration passed. Recording and editing details are in the [original demo evidence](docs/evidence/demo-video-20261014.md) and [revised narration record](docs/evidence/demo-video-v2-20261015.md). If GitHub does not play the MP4 inline, open the video file and use its download control. The recorded walkthrough has Chinese narration/subtitles.
+
+## Architecture
+
+### One verifier, two entry points
+
+```mermaid
+flowchart TD
+    Engineer[Engineer / local automation] --> CLI[Standalone CLI]
+    Goal[Acceptance goal] --> AGH[Agnes in AGH: plan and review]
+    AGH --> Tools[Controlled MQTT audit tools]
+    CLI --> Core[Deterministic core verifier]
+    Tools --> Core
+    Fixtures[Synthetic cases and independent requirements] --> Core
+    Core --> Source[Source: local Mosquitto]
+    Core --> Target[Target: local EMQX]
+    Source --> Evidence[Protocol and message-delivery observations]
+    Target --> Evidence
+    Evidence --> Report[Three-state report and run events]
+    Report --> Terminal[Human-readable and JSON CLI output]
+    Report --> Panel[AGH session panel]
+    Report --> AGH
+    AGH --> Retest[Scoped retest with parent runId]
+    Retest --> Tools
+```
+
+### Core modules
+
+| Module | Implementation and responsibility |
+| --- | --- |
+| [`core/`](core/README.md) | Minimal MQTT 3.1.1 client, publish/subscribe probes, health gating, deterministic verdicts, aggregation and report rendering. |
+| [`cli/`](cli/README.md) | Standalone audit command and controlled Docker environment lifecycle (`init`, `up`, `check`, `audit`, `down`). |
+| [`plugins/agh/`](plugins/agh/README.md) | `mqtt-audit-tools` 0.3.0: tool definitions, run store, append-only events, health monitoring and read-only panel services. Bundled core and case files are checked against the root copies. |
+| [`fixtures/`](fixtures/README.md) / [`deploy/`](deploy/README.md) | Synthetic identities, topics, independent expectations, ACL variants and Broker templates. Credentials are generated locally. |
+| [`tests/`](tests/README.md) | Protocol, verdict, aggregation, CLI boundary, plugin contract, bundled-file consistency and panel checks. |
+| [`agh_launcher.py`](agh_launcher.py) | Windows launcher for a local AGH Web service; it does not bundle AGH, Brokers, Node.js or a model. |
+
+### Execution and verdicts
+
+The workflow discovers the case set, prepares a run, executes the probes, reads the structured report and explains evidence and limits. A retest retains `parentRunId` and selected check IDs; the initial run covers c1–c8, with at most two retest rounds per root task.
+
+| Layer | Values | Meaning |
 | --- | --- | --- |
-| 单元测试、核心与 CLI | Node.js 24.10 或更高版本；Windows、Linux 或 macOS 终端 | Docker、AGH、模型账户 |
-| 本地 Broker 复现 | Node.js 24.10+；Docker Desktop（Linux 容器）或 Docker Engine；Docker Compose v2；11883 和 2883 回环端口可用 | AGH、模型账户 |
-| AGH 工具、Skill 和面板 | 单独安装的 Agnes Harness；Node.js 24.10+；如需模型驱动会话，再配置官方 Agnes 模型账户 | 项目不提供 AGH、模型文件或模型凭据 |
-| Windows 一键启动器 | Windows x64；Node.js 24.10+；可用的 AGH 固定版本源码/构建产物 | 启动器本身不打包 Node、AGH、Docker 或模型 |
-| 重建 Windows EXE | Python、PyInstaller（当前构建验证为 Python 3.14.6 / PyInstaller 6.19.0） | 这只用于重新打包启动器，不是运行核心审计的要求 |
+| Permission observation | `allow` / `deny` / `unknown` | What the protocol and delivery evidence establish for an operation. |
+| Requirement result | `pass` / `fail` / `unknown` | Whether the observation meets the independent expected permission. |
+| Overall result | `fail` > `unknown` > `pass` | A known failure takes precedence over uncertainty. |
 
-Windows 上先按 [Docker 官方安装说明](https://docs.docker.com/desktop/setup/install/windows-install/)安装 Docker Desktop；安装后启动 Docker Desktop，确保 Docker Engine 已就绪并使用 Linux 容器。Docker Desktop 已包含 Engine、CLI 和 Compose；其他 Linux 主机需准备 Docker Engine 与 [Compose 插件](https://docs.docker.com/compose/install/)。用后面的 `docker version` 和 `docker compose version` 命令确认安装。Docker 首次运行需要能获取项目固定摘要引用的镜像。EMQX 镜像是本地单节点测试用途，带有 BSL-1.1 许可；本项目不重新分发镜像。当前实测环境为 Windows 11、Docker Desktop、WSL2、Docker Engine 29.8.x 和 Compose v2。
+In MQTT 3.1.1, PUBACK does not contain an authorization decision. A publish without delivery, CONNACK 4/5, a timeout, a connection failure or unsupported syntax cannot establish topic-level denial. The supported explicit topic-denial evidence is subscription SUBACK `0x80`. See the [verdict implementation](core/prober.mjs) and [architecture notes](docs/architecture.md).
 
-项目没有 npm 第三方运行依赖，不需要 `npm install`。核心和 CLI 使用 Node.js 内置模块；AGH 插件的浏览器面板使用 AGH 提供的 React 运行时。
+## Integration Standards
 
-## 快速开始：测试和本地审计
+These are the project's implemented contracts and compatibility limits, rather than a claim of certification or compatibility with every AGH release.
 
-在 PowerShell、Terminal 或其他 shell 中进入仓库根目录。运行测试和核心 CLI 只需 Node.js：
+### Runtime and protocol compatibility
+
+| Area | Contract |
+| --- | --- |
+| Runtime | Node.js **24.10+**, ECMAScript modules; core and backend tools have no third-party npm runtime dependencies. |
+| MQTT | **MQTT 3.1.1**, publish/subscribe probes with message correlation and delivery witnesses. No verified MQTT 5 verdict path. |
+| Brokers | Recorded baseline: Mosquitto **2.1.2** and EMQX **6.3.1**, pinned by image digest; see [environment versions](docs/environment-versions.md). |
+| Local deployment | Docker Desktop with Linux containers, or Docker Engine; Compose v2 or a compatible version. Separate source/target bridge networks and loopback-only MQTT ports. |
+| AGH host | Verified against upstream commit `c4efd170547a225890664c1c186a7347399b53e0`. AGH is installed separately; this project does not upgrade it or claim compatibility with the current upstream release. |
+| Plugin/UI | ESM plugin manifest in [`package.json`](plugins/agh/mqtt-audit-tools/package.json); AGH-provided React runtime; `dsh-client-slots/v1` with `rightbar`, `sidebar.panellist` and `shell.overlay`. |
+
+### Controlled tool interface
+
+Tools use JSON Schema-style parameter definitions through AGH's plugin API. The accepted case and instance identifiers are `migration-baseline` and `local-isolated`; unknown properties are disallowed by the declared schemas. Interfaces do not expose arbitrary Shell commands, file paths, network targets or model selection.
+
+| Tool | Parameters | Purpose |
+| --- | --- | --- |
+| `mqtt_audit_list_cases` | `{}` | Discover checks and independent requirements. |
+| `mqtt_audit_prepare_run` | `caseId`, optional `instanceId`, `parentRunId`, `checkIds` | Allocate a run; prepare a scoped retest when a parent is supplied. No Broker connection at this step. |
+| `mqtt_audit_run_check` | `caseId`, optional `instanceId`, `runId` | Execute the prepared run; omitting `runId` starts a full run. |
+| `mqtt_audit_read_result` | `runId` | Retrieve a completed structured report. |
+| `mqtt_audit_plan_next` | `runId` | Optional bounded Jev advice, disabled by default; Agnes retains action selection. |
+
+Run IDs match `^run-[A-Za-z0-9_-]{1,128}$`; scoped check IDs are c1–c8. The [tool source](plugins/agh/mqtt-audit-tools/index.mjs) and [packaged Skill](plugins/agh/mqtt-audit-tools/skills/mqtt-migration-audit.md) define the full contract and workflow.
+
+### Reports and panel services
+
+- Audit reports use schema **`mqtt-permission-audit/1`**, including `caseSet`, `brokers`, `checks`, `summary` and `scope`; `summary.overall` is `pass`, `fail` or `unknown`.
+- AGH run reports additionally carry `runId`, `parentRunId`, `rootRunId`, `round`, `checkIds` and `coverage` so a partial retest cannot stand in for full acceptance.
+- Tools return AGH `content` and `structured` payloads. Tool-layer errors use `mqtt-permission-audit-tool/1` with `status: "error"`, a code and a message; they are not ACL verdicts.
+- Read-only services are `mqtt.audit.latestresult`, `mqtt.audit.runstatus`, `mqtt.audit.events` and `mqtt.audit.health`. The panel selects run IDs from the current session's tool records; independent CLI results and unrelated sessions are not automatically mixed in.
+
+### Integration paths
+
+**Standalone CLI / local automation.** Run the verifier directly and consume its JSON report and exit code:
 
 ```sh
+node cli/run-audit.mjs --source 127.0.0.1:11883 --target 127.0.0.1:2883 --creds .local/env/creds.json --cases fixtures/cases/migration-baseline.json --json .local/env/audit-result.json
+```
+
+| Audit CLI exit code | Meaning |
+| --- | --- |
+| `0` | All requirements pass. |
+| `1` | At least one failure was found. |
+| `2` | No failure, but at least one result is unknown. |
+| `3` | Argument, configuration or runtime error. |
+
+The CLI can be called by a future CI workflow; this README does not claim a configured or verified hosted CI pipeline.
+
+**AGH plugin.** Start the local Broker environment, then install `plugins/agh/mqtt-audit-tools` through AGH's local-source plugin workflow. Review integrity and capabilities, trust and enable the package, and start a new session with the `mqtt-migration-audit` Skill available. No separate MCP server is required.
+
+If using a named environment, set `MQTT_AUDIT_CREDS` in the AGH process environment **before starting AGH**, pointing to that environment's synthetic `creds.json`. Otherwise the plugin checks `.local/reproducible/creds.json` before `.local/env/creds.json`. Configure the official Agnes account through AGH itself; never copy or export model credentials. Confirm the tool trace, report and panel use the same `runId`. See the [deployment guide](docs/deployment.md).
+
+Jev is an optional fixed-provider recommendation path, not a second execution loop or a source of permission verdicts. Keep it disabled for competition use unless the rules explicitly allow it.
+
+## Quickstart
+
+### 1. Run unit and contract checks
+
+```sh
+git clone https://github.com/M-ui-si/mqtt-permission-auditor.git
+cd mqtt-permission-auditor
 node --version
 npm test
 ```
 
-Node 版本必须为 24.10 或更高。若要启动后面的本地 Broker，还需确认 Docker 命令可连接正在运行的 Linux Docker Engine：
+Node.js 24.10+ is required. No `npm install`, Docker, AGH or model account is needed for this test path.
+
+### 2. Reproduce the local Broker scenario
+
+Start Docker in Linux container mode and check that its engine and Compose are available:
 
 ```sh
 docker version
 docker compose version
+npm run env:init
+npm run env:up
+npm run env:check
+npm run env:audit
+npm run env:down
 ```
 
-然后创建并运行本项目自己的隔离 Broker 环境：
+`env:init` generates random synthetic credentials in `.local/env/` and refuses to overwrite an existing directory. `env:down` stops this environment and preserves files and volumes. The first startup needs the pinned images locally or access to fetch them.
 
-```sh
-npm run env:init      # 生成 .local/env/ 和随机合成凭据
-npm run env:up        # 创建/启动 Mosquitto 与 EMQX，等待见证健康检查
-npm run env:check     # 分别验证两端实际消息送达
-npm run env:audit     # 执行固定 c1–c8 审计并输出报告
-npm run env:down      # 停止本项目 Broker，保留文件、报告和数据卷
-```
-
-默认环境名称为 `env`，ACL 档案为 `naive`。如果 `.local/env` 已存在，初始化会拒绝覆盖；请保留并检查现有环境，或创建新名称：
+The default **`naive` audit is expected to fail with exit code 1**: c3 is delivered on the target despite a business prohibition. Source-side uncertainty still does not establish permission expansion. `corrected` may remain `unknown` because missing delivery does not prove rejection; `omission` demonstrates a missing business authorization. Use a fresh environment name to choose a variant, and stop an existing environment before reusing its fixed ports:
 
 ```sh
 node cli/environment.mjs init --name demo --variant corrected
@@ -62,43 +200,20 @@ node cli/environment.mjs audit --name demo
 node cli/environment.mjs down --name demo
 ```
 
-`--variant` 只用于 `init`，支持 `naive`、`corrected` 和 `omission`。切换档案需创建新环境，不能在现有运行实例上静默换 ACL。部署细节、网络边界和故障排查见[本地部署与验收](docs/deployment.md)。
+### 3. Open the AGH interface (optional)
 
-### 预期结果与退出码
+On Windows, [`MQTT权限迁移审计器.exe`](MQTT权限迁移审计器.exe) starts or reuses the local AGH Web interface. Node.js, the pinned AGH CLI build and an official Agnes account for model-driven sessions are separate prerequisites. The launcher does not include Brokers or a model. See the [runtime and launcher guide](运行说明.md) for lookup paths and rebuilding with Python/PyInstaller.
 
-默认 `naive` 档案故意保留一条目标端授权过宽的规则，因此 `env:audit` **预期判定失败并以退出码 1 结束**；典型证据是 c3 消息在目标端实际送达，但独立业务要求规定只有 `ops-admin` 可执行该操作。这是审计发现，不代表程序启动失败。
+## Safety and Scope
 
-环境命令的退出码为：`0` 就绪或验收通过，`1` 发现业务失败，`2` 未就绪或无法判定，`3` 参数、配置或 Docker 命令错误。`corrected` 也可能因现有协议无法证明拒绝而得到 `unknown`；不能将缺少送达证据说成拒绝已经证实。
+All project cases use synthetic identities, ACLs, topics and messages. The verifier accepts only numeric loopback `127.0.0.1`; `localhost`, domains and remote Brokers are rejected. MQTT ports are bound to `127.0.0.1:11883` and `127.0.0.1:2883`; the EMQX management dashboard is not published to the host.
 
-合成凭据和报告留在被忽略的 `.local/<环境名>/`：凭据位于 `creds.json`，报告位于 `agh-runs/`。`env:down` 不删除这些文件或 Docker 卷。不要将 `.local/` 复制进 Git、插件包或公开材料。
+Keep `.local/`, credentials, raw sessions and runtime reports out of Git and public evidence. Review and redact session exports before sharing. EMQX's recorded image is BSL-1.1 and is used only for local single-node tests; this project does not redistribute it. Third-party AGH UI attribution is retained in the [source notice](plugins/agh/mqtt-audit-tools/third-party/agnes-harness/README.md).
 
-## 运行 Windows AGH 界面
+Finite checks establish results only for the tested identities, topics, operations and versions. They do not prove full ACL equivalence, production readiness or cross-environment portability. Unit checks, real Broker integration, real Agnes sessions and browser rendering are distinct kinds of evidence.
 
-双击仓库根目录的 [`MQTT权限迁移审计器.exe`](MQTT权限迁移审计器.exe)。启动器自动启动或复用本机 AGH Web 服务，打开浏览器并在窗口中显示本地网址；窗口标题为“MQTT 权限迁移审计器”。运行环境、AGH 查找路径和停止行为见[运行说明](运行说明.md)。
+## Documentation
 
-启动器需要 Node.js 24.10+ 和 Agnes Harness 固定版本 `c4efd170547a225890664c1c186a7347399b53e0` 的 CLI 构建产物 `packages/cli/dist/local/agnes.mjs`。它查找包内 `vendor/agnes-harness/`、`AGH_SOURCE` 环境变量，或本机 `D:\AGH`。本包当前不含 AGH 上游源码，也不含 Node 运行时。模型账户须在 AGH 中自行配置；启动器不读取或复制其他 profile 的模型凭据。
+[Documentation index](docs/README.md) · [Deployment](docs/deployment.md) · [Architecture notes](docs/architecture.md) · [Evidence](docs/evidence/README.md) · [Progress](docs/progress.md)
 
-## 在 AGH 中使用插件
-
-AGH 必须单独安装并运行。打开 AGH 插件管理，从本地来源选择 `plugins/agh/mqtt-audit-tools`，核验包名与 integrity 后按官方流程安装、授信并启用。插件包含工具、Skill 和只读结果面板，不需要另装 MCP 服务器。使用插件连本项目 Broker 时，启动 AGH 的进程应设置 `MQTT_AUDIT_CREDS`，指向所选 `.local/<环境名>/creds.json` 的绝对路径；这是合成 Broker 凭据，与 Agnes 模型凭据无关。未设置时，插件按 `.local/reproducible/creds.json`、`.local/env/creds.json` 的顺序寻找默认文件。插件配置和验收步骤见[本地部署与验收](docs/deployment.md)及[插件说明](plugins/agh/README.md)。
-
-## 安全边界与判定范围
-
-- 开发、演示和自动化测试使用合成 ACL、合成身份和本地 Broker，不接入生产系统。
-- Broker 隔离在两个独立 Docker bridge 网络，MQTT 端口仅绑定 `127.0.0.1:11883` 和 `127.0.0.1:2883`；EMQX Dashboard 不发布到宿主机。
-- 验证器拒绝 `localhost`、域名、非回环 IP 和任意远程目标，只允许数字回环地址 `127.0.0.1`。
-- 结论为“通过 / 失败 / 无法判定”三态。MQTT 3.1.1 的 PUBACK 不携带授权结果；发布未送达、超时或连接错误不能单独证明拒绝。
-- 首版覆盖 publish、subscribe 探针和固定案例，不代表对任意 Broker、ACL 语法、QoS、身份体系或所有业务流量的完整形式化证明。
-
-## 项目结构
-
-| 路径 | 内容 |
-| --- | --- |
-| [`core/`](core/README.md) | MQTT 探针、三态判定、聚合和报告生成 |
-| [`cli/`](cli/README.md) | 独立审计 CLI 和隔离 Docker 环境生命周期命令 |
-| [`plugins/agh/`](plugins/agh/README.md) | AGH 工具、Skill 和只读结果面板 |
-| [`fixtures/`](fixtures/README.md) / [`deploy/`](deploy/README.md) | 固定合成案例、Broker 与 ACL 模板 |
-| [`tests/`](tests/README.md) | 核心、CLI、插件契约和边界测试 |
-| [`docs/`](docs/README.md) | 架构、部署、证据、环境版本和项目进度 |
-
-更完整的复现说明见[部署指南](docs/deployment.md)，项目功能和操作限制见[运行说明](运行说明.md)。
+Supporting technical notes and historical evidence are primarily in Chinese. The English and Chinese READMEs cover the same four introduction sections. The presentation follows the bilingual navigation and section-based organization of [Agnes Harness](https://github.com/AgnesAI-Labs/agnes-harness).
