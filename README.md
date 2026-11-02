@@ -17,12 +17,12 @@ English | [简体中文](README.zh-CN.md)
 </div>
 
 <p align="center">
-  <a href="docs/操作演示视频.mp4">
-    <img src="docs/assets/readme/demo-preview.webp" alt="Animated MQTT audit preview: business failure, unavailable Broker and a successful scoped check" width="100%" />
+  <a href="docs/videos/mqtt-permission-auditor-demo.en.mp4">
+    <img src="docs/assets/readme/demo-preview.en.webp" alt="Animated MQTT audit preview: business failure, unavailable Broker and a successful scoped check" width="100%" />
   </a>
 </p>
 
-<p align="center"><sub>29-second silent looping preview · Click to watch the full demo with audio.</sub></p>
+<p align="center"><sub>20-second looping preview · Click to watch the silent English feature demo.</sub></p>
 
 ## Project Overview
 
@@ -51,9 +51,11 @@ The archived evidence records local Broker checks, real Agnes tool calls and pan
 
 ## Demo Video
 
-**[Watch or download the project demo →](docs/操作演示视频.mp4)**
+**[Watch the English feature demo (silent) →](docs/videos/mqtt-permission-auditor-demo.en.mp4)**
 
-The walkthrough shows the acceptance goal, actual tool execution and observable results in three situations:
+[中文版本](docs/videos/mqtt-permission-auditor-demo.zh-CN.mp4) · [English subtitles (SRT)](docs/videos/mqtt-permission-auditor-demo.en.srt)
+
+A **1 minute 52 second** feature walkthrough with burned-in captions and **no audio track**, presented in 1080p at 25 fps. It goes directly into tool discovery, full-scope audit execution, evidence inspection, targeted retesting and structured reports.
 
 | Scenario | What to look for |
 | --- | --- |
@@ -61,7 +63,7 @@ The walkthrough shows the acceptance goal, actual tool execution and observable 
 | Broker unavailable | Missing observations produce `unknown`, rather than a denial or a passing audit. |
 | Successful scoped check | A delivery check passes after recovery, with its limited coverage stated explicitly. |
 
-The demonstration uses isolated local Brokers and synthetic data. A successful c1 check does not mean the full migration passed. Recording and editing details are in the [original demo evidence](docs/evidence/demo-video-20261014.md) and [revised narration record](docs/evidence/demo-video-v2-20261015.md). If GitHub does not play the MP4 inline, open the video file and use its download control. The recorded walkthrough has Chinese narration/subtitles.
+Both language versions use isolated local Brokers and synthetic data from the recorded runs. A successful c1 check does not mean the full migration passed. The English version has English headings and captions; the recorded application UI remains Chinese. See the [bilingual feature-demo record](docs/evidence/feature-demo-bilingual-20261102.md) and [video files and checksums](docs/videos/README.md). If GitHub does not play the MP4 inline, open the file and use its download control. The [earlier narrated demo](docs/操作演示视频.mp4) remains available as an archive.
 
 ## Architecture
 

@@ -1,0 +1,95 @@
+﻿1
+00:00:00,000 --> 00:00:04,000
+Load the audit Skill and inspect the fixed cases and independent requirements.
+
+2
+00:00:04,000 --> 00:00:08,000
+Select migration-baseline with full coverage of checks c1–c8.
+
+3
+00:00:08,000 --> 00:00:13,000
+prepare_run allocates a runId; run_check executes the same run.
+
+4
+00:00:13,000 --> 00:00:18,000
+Inspect connection, subscription, publication and delivery events for both Brokers.
+
+5
+00:00:18,000 --> 00:00:22,000
+c3: the device publishes to factory/admin/secret; the requirement is deny.
+
+6
+00:00:22,000 --> 00:00:26,000
+The target witness receives the message, establishing a requirement failure.
+
+7
+00:00:26,000 --> 00:00:30,000
+Inspect tool order, parameters and structured returns; correlate the runId.
+
+8
+00:00:30,000 --> 00:00:34,000
+Correlate the tool trace with panel results; verdicts follow actual observations.
+
+9
+00:00:34,000 --> 00:00:39,000
+Read the full report after the user follow-up, then prepare a c3-only retest.
+
+10
+00:00:39,000 --> 00:00:44,000
+Link the full run through parentRunId and restrict checkIds to c3.
+
+11
+00:00:44,000 --> 00:00:48,000
+Execute the retest and read its report; coverage is limited to the selected check.
+
+12
+00:00:48,000 --> 00:00:53,000
+Expand c3 evidence: target allow, source unknown, requirement result fail.
+
+13
+00:00:53,000 --> 00:00:58,000
+Source uncertainty does not prove expansion. Configuration is unchanged; c3 still fails.
+
+14
+00:00:58,000 --> 00:01:04,000
+The operator has paused target EMQX; the source remains reachable.
+
+15
+00:01:04,000 --> 00:01:10,000
+Run the full check and read its report; target observations record broker-unavailable.
+
+16
+00:01:10,000 --> 00:01:15,000
+Each check c1–c8 has an unknown target observation; the overall result is unknown.
+
+17
+00:01:15,000 --> 00:01:20,000
+A connection failure proves neither a topic ACL denial nor acceptance success.
+
+18
+00:01:20,000 --> 00:01:25,000
+After the operator restores the target Broker, read the preceding boundary report.
+
+19
+00:01:25,000 --> 00:01:30,000
+Use the boundary run as parentRunId and prepare only the c1 publish check.
+
+20
+00:01:30,000 --> 00:01:34,000
+Execute c1 and read the structured result for the same runId.
+
+21
+00:01:34,000 --> 00:01:38,000
+c1: device-sensor publishes a synthetic message to telemetry/up.
+
+22
+00:01:38,000 --> 00:01:42,000
+Witness subscribers receive the message on both Brokers; both observations are allow.
+
+23
+00:01:42,000 --> 00:01:47,000
+Verify runId, parentRunId and the scoped result: c1 is pass with partial coverage.
+
+24
+00:01:47,000 --> 00:01:52,000
+Checks c2–c8 were not retested. Passing c1 does not establish full migration acceptance.

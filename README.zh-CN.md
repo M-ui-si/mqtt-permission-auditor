@@ -17,12 +17,12 @@
 </div>
 
 <p align="center">
-  <a href="docs/操作演示视频.mp4">
-    <img src="docs/assets/readme/demo-preview.webp" alt="MQTT 审计动态预览：业务失败、Broker 不可用与局部检查通过" width="100%" />
+  <a href="docs/videos/mqtt-permission-auditor-demo.zh-CN.mp4">
+    <img src="docs/assets/readme/demo-preview.zh-CN.webp" alt="MQTT 审计动态预览：业务失败、Broker 不可用与局部检查通过" width="100%" />
   </a>
 </p>
 
-<p align="center"><sub>29 秒无声循环预览 · 点击观看带声音的完整演示。</sub></p>
+<p align="center"><sub>20 秒循环预览 · 点击观看中文无音轨功能演示。</sub></p>
 
 ## 项目介绍
 
@@ -51,9 +51,11 @@ MQTT 平台迁移时，ACL 通配符、规则顺序和默认决策的差异，�
 
 ## 视频介绍
 
-**[观看或下载项目演示视频 →](docs/操作演示视频.mp4)**
+**[观看中文版功能演示（无音轨）→](docs/videos/mqtt-permission-auditor-demo.zh-CN.mp4)**
 
-演示围绕验收目标、实际工具执行和可观察结果，展示三类情况：
+[English version](docs/videos/mqtt-permission-auditor-demo.en.mp4) · [中文字幕（SRT）](docs/videos/mqtt-permission-auditor-demo.zh-CN.srt)
+
+视频长 **1 分 52 秒**，1080p、25 fps，字幕已嵌入画面，**完全没有音轨**。直接展示工具发现、全量审计、证据查看、局部复测与结构化报告，不含背景介绍片头。
 
 | 场景 | 观看重点 |
 | --- | --- |
@@ -61,7 +63,7 @@ MQTT 平台迁移时，ACL 通配符、规则顺序和默认决策的差异，�
 | Broker 不可用 | 缺失观测时输出 `unknown`，不将其视为拒绝或验收通过。 |
 | 局部检查成功 | 环境恢复后送达检查通过，同时明确该结果的有限覆盖范围。 |
 
-演示只使用本地隔离 Broker 与合成数据。c1 单项通过不代表完整迁移验收通过。录制与剪辑说明见[原始实录证据](docs/evidence/demo-video-20261014.md)和[新版配音制作记录](docs/evidence/demo-video-v2-20261015.md)。若 GitHub 未内嵌播放 MP4，可打开视频文件并使用下载入口观看。现有视频采用中文配音和中文字幕。
+两版使用既有实录中的本地隔离 Broker 与合成数据。c1 单项通过不代表完整迁移验收通过。英文版的标题和字幕为英文，应用界面保留原实录中文。制作与验证见[中英文功能演示记录](docs/evidence/feature-demo-bilingual-20261102.md)及[视频文件与校验值](docs/videos/README.md)。若 GitHub 未内嵌播放 MP4，可打开文件并使用下载入口观看。[旧版有声演示](docs/操作演示视频.mp4)仍保留供查阅。
 
 ## 架构介绍
 
