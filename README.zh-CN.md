@@ -16,6 +16,14 @@
 
 </div>
 
+<p align="center">
+  <a href="docs/操作演示视频.mp4">
+    <img src="docs/assets/readme/demo-preview.webp" alt="MQTT 审计动态预览：业务失败、Broker 不可用与局部检查通过" width="100%" />
+  </a>
+</p>
+
+<p align="center"><sub>29 秒无声循环预览 · 点击观看带声音的完整演示。</sub></p>
+
 ## 项目介绍
 
 ### 项目背景

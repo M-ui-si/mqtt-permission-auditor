@@ -16,6 +16,14 @@ English | [简体中文](README.zh-CN.md)
 
 </div>
 
+<p align="center">
+  <a href="docs/操作演示视频.mp4">
+    <img src="docs/assets/readme/demo-preview.webp" alt="Animated MQTT audit preview: business failure, unavailable Broker and a successful scoped check" width="100%" />
+  </a>
+</p>
+
+<p align="center"><sub>29-second silent looping preview · Click to watch the full demo with audio.</sub></p>
+
 ## Project Overview
 
 ### Background
